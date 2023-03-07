@@ -86,7 +86,7 @@ def add():
 @cli.command()
 def status():
     items = manager.check_seed_times()
-    items = list(sorted(items.items(), key=lambda x: x[1]))
+    items = list(sorted(items.items(), key=lambda x: x[1] if x is not None else -1))
 
     table = rich.table.Table(title="Freeleech Torrents")
     table.add_column("Tracker")
@@ -112,7 +112,7 @@ def status():
 @cli.command()
 def clean():
     items = manager.clean_up()
-    items = list(sorted(items.items(), key=lambda x: -x[1]))
+    items = list(sorted(items.items(), key=lambda x: x[1]))
 
     table = rich.table.Table(title="Freeleech Torrents")
     table.add_column("Tracker")

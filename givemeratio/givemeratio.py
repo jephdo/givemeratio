@@ -2,13 +2,13 @@ import os
 import io
 import re
 import enum
-import yaml
 import unicodedata
 import string
 import pathlib
 
 from urllib.parse import urljoin
 from datetime import datetime, timedelta
+from typing import Optional
 
 import torf
 import httpx
@@ -162,6 +162,12 @@ class LocalTorrentFile(BaseModel):
     contents: bytes
     size: int
 
+    def delete(self):
+        try:
+            os.remove(self.filepath)
+        except FileExistsError:
+            pass
+
     @property
     def filepath(self):
         return generate_filepath(self.tracker, self.id)
@@ -297,7 +303,7 @@ class RatioManager:
             return False
         return True
 
-    def check_seed_times(self) -> dict[LocalTorrentFile, timedelta]:
+    def check_seed_times(self) -> dict[LocalTorrentFile, Optional[timedelta]]:
         results = {}
         files = os.listdir(settings.TORRENT_FILE_LOCATION)
 
@@ -312,8 +318,13 @@ class RatioManager:
         qbittorrent_info = {info.infohash_v1: info for info in raw_qbittorrent_info}
 
         for torrent in torrents:
-            info = qbittorrent_info[torrent.infohash]
-            seeding_time = timedelta(seconds=info.seeding_time)
+            try:
+                info = qbittorrent_info[torrent.infohash]
+            except KeyError:
+                torrent.delete()
+                seeding_time = None
+            else:
+                seeding_time = timedelta(seconds=info.seeding_time)
             results[torrent] = seeding_time
         return results
 
