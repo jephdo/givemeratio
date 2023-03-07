@@ -141,8 +141,9 @@ def run():
         except httpx.ReadTimeout:
             time.sleep(settings.DAEMON_SLEEP_INTERVAL_SECONDS)
             continue
-        items = manager.validate_items(items)
-        for item, errors in items.items():
+
+        for item in items:
+            errors = manager.validate(item)
             if not errors:
                 print(f"Adding {item.title}")
                 try:
